@@ -1,0 +1,40 @@
+<link rel="import" href="../tangere/tangere.html" />
+
+<dom-module id="at-form-image-upload">
+  <template>
+    <style>
+      :host {
+        display: block;
+        box-sizing: border-box;
+      }
+    </style>
+    at-form-image-upload works!
+  </template>
+</dom-module>
+<script>
+  Polymer({
+    is: "at-form-image-upload",
+    
+    properties: {
+      
+      uploadUrl: {
+        type: String,
+        value: "",
+      },
+
+      value: {
+        type: String,
+        value: ""
+      }
+    },
+
+    $meta: [{
+      title: "Image upload",
+      type: "string",
+      xtype: "at-form-image-upload"
+    }],
+
+    ready: function() {
+    }
+  });
+</script>
