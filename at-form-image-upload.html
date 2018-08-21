@@ -1,30 +1,200 @@
 <link rel="import" href="../tangere/tangere.html" />
+<link rel="import" href="../at-i18n/at-i18n-behavior.html">
+<link rel="import" href="../at-form-behaviors/at-form-behaviors.html">
+<link rel="import" href="at-form-image-upload-input-validation.html">
+<link rel="import" href="../at-core-style-classes/at-core-style-classes.html">
+<link rel="import" href="../iron-label/iron-label.html">
+
+<link rel="import" href="../at-carbon-button/at-carbon-button.html">
+<link rel="import" href="../at-carbon-icon/at-carbon-icon.html">
+<link rel="import" href="../at-core-modal-element/at-core-modal-element.html">
+<link rel="import" href="../at-core-activity/at-core-activity.html">
 
 <dom-module id="at-form-image-upload">
   <template>
-    <style>
+    <style include="at-core-style-classes"></style>
+    <style include="at-form-common">
       :host {
         display: block;
         box-sizing: border-box;
       }
+
+      .at-button {
+        margin: 0 2px;
+        outline: none;
+      }
+
+      .at-button:focus {
+        outline: none;
+      }
+
+      .at-button .at-button-icon {
+        vertical-align: middle;
+      }
+
+      .at-button .at-button-label {
+        vertical-align: middle;
+        margin-left: 2px;
+      }
+
+      .image-preview {
+        box-sizing: border-box;
+        width: 100px;
+      }
+
+      .preview-image {
+        display: block;
+        box-sizing: border-box;
+        width: 100%;
+      }
     </style>
-    at-form-image-upload works!
+
+    <input style="display: none" id="fileInput" on-change="_handleFileInputChange" type="file"/>
+    <at-core-modal-element wide id="externalUrlModal" element-name="at-form-complex/at-form-complex" schema="[[_externalImageUrlSchema]]" on-value-changed="_handleModalElementValueChanged"></at-core-modal-element>
+    <at-core-activity id="uploadActivity" url="[[uploadUrl]]" method="POST" on-response="_handleUploadActivityResponse" on-error="_handleUploadActivityError"></at-core-activity>
+
+    <div id="atContainer" class="at-container">
+      <iron-label id="label" for="uploadImageButton" disabled$="[[disabled]]" hidden$="[[hideLabel]]">{{_getLocalized(label)}}</iron-label>
+      <div id="contentContainer" class="layout-vertical">
+        <div id="imagePreview" class="image-preview"></div>
+
+        <div>
+          <at-carbon-button id="uploadImageButton" on-click="_uploadFileClickHandler" disabled$="[[disabled]]" class="at-button">
+            <at-carbon-icon icon="now:upload" class="at-button-icon"></at-carbon-icon>
+            <iron-label id="uploadImageButtonText" class="at-button-label">{{_getLocalized("Upload an image")}}</iron-label>
+          </at-carbon-button>
+          <span class="font-body1">{{_getLocalized("or")}}</span>
+          <at-carbon-button id="referenceExternalImageButton" on-click="_handleReferenceExternalImageClick" disabled$="[[disabled]]" class="at-button">
+            <at-carbon-icon icon="[[icon]]" class="at-button-icon"></at-carbon-icon>
+            <iron-label id="referenceExternalImageButtonText" class="at-button-label">{{_getLocalized("Reference external image")}}</iron-label>
+          </at-carbon-button>
+
+          <at-carbon-button id="clearButton" on-click="_handleClearButtonClick" disabled$="[[disabled]]" class="at-button" hidden>
+            <at-carbon-icon icon="cancel" class="at-button-icon"></at-carbon-icon>
+            <iron-label class="at-button-label">{{_getLocalized("Remove")}}</iron-label>
+          </at-carbon-button>
+        </div>
+      </div>
+      <div id="hint"></div>
+    </div>
   </template>
 </dom-module>
 <script>
   Polymer({
     is: "at-form-image-upload",
-    
+    behaviors: [Tangere.behaviors.i18n, Tangere.behaviors.formUIGeneric, Tangere.behaviors.AtFormImageUploadInputValidation],
     properties: {
-      
+
+      /**
+       * Label for the element
+       * @property label
+       * @type String
+       */
+      label: {
+        type: String,
+        value: 'Select an image',
+        title: 'Label'
+      },
+
+      /**
+       * Hides the label
+       * @property hideLabel
+       * @type String
+       */
+      hideLabel: {
+        type: Boolean,
+        value: false,
+        title: 'Do not show the label'
+      },
+
+      /**
+       * Disabled state of the element; true = disabled, false = enabled
+       * @property disabled
+       * @type Boolean
+       * @default false
+       */
+      disabled: {
+        type: Boolean,
+        value: false,
+        observer: '_disabledChanged',
+        title: 'Field value can not be changed'
+      },
+
+      /**
+       * Hides the element. When hidden nothing is displayed for the element
+       * @property hide
+       * @type Boolean
+       * @default false
+       */
+      hide: {
+        type: Boolean,
+        value: false,
+        observer: '_hideChanged',
+        title: 'Field is invisible'
+      },
+
+      /**
+       * Required state of the element; true = required, false = optional
+       * @property required
+       * @type Boolean
+       * @default false
+       */
+      required: {
+        type: Boolean,
+        value: false,
+        title: 'Input required'
+      },
+
+      /**
+       * Name of the icon
+       * @property icon
+       * @type String
+       * @default 'picture'
+       */
+      icon: {
+        type: String,
+        value: 'now:picture',
+        title: 'Button icon name'
+      },
+
+      /**
+       * Url of the server image will be uploaded to
+       * @property uploadUrl
+       * @type String
+       * @default ""
+       */
       uploadUrl: {
         type: String,
         value: "",
+        xgridcols: "12"
       },
 
+      /**
+       * Url of the uploaded image
+       * @property value
+       * @type String
+       * @default ""
+       */
       value: {
         type: String,
-        value: ""
+        value: "",
+        xgridcols: "12"
+      },
+
+      _externalImageUrlSchema: {
+        type: Object,
+        value: function() {
+          return {
+            properties: {
+              externalImageUrl: {
+                type: String,
+                value: "",
+                xgridcols: "12",
+                title: "External Image Url"
+              }
+            }
+          }
+        }
       }
     },
 
@@ -34,7 +204,163 @@
       xtype: "at-form-image-upload"
     }],
 
+    observers: [
+      '_internalValidStateUpdate(required, autoValidate)'
+    ],
+
+    _getLocalized: function(title) {
+      return this.T(title);
+    },
+
+    _disabledChanged: function(newValue, oldValue) {
+      this.toggleClass('disabled', newValue, this.$.atContainer);
+    },
+
+    _hideChanged: function(newValue, oldValue) {
+      this.toggleClass('hidden', newValue, this.$.atContainer);
+    },
+
     ready: function() {
+      this._isReady = true;
+    },
+
+    _uploadFileClickHandler: function(event) {
+      var clickEvent = document.createEvent('MouseEvent');
+      clickEvent.initEvent('click', false, false);
+      this.$.fileInput.dispatchEvent(clickEvent);
+    },
+
+    _handleReferenceExternalImageClick: function(event) {
+      this.$.externalUrlModal.open();
+    },
+
+    _handleClearButtonClick: function(event) {
+      Polymer.dom(this.$.imagePreview).innerHTML = '';
+      this.value = "";
+      
+      Polymer.dom(this.$.clearButton).setAttribute('hidden', '');
+
+      Polymer.dom(this.$.uploadImageButton).removeAttribute('hidden');
+      Polymer.dom(this.$.referenceExternalImageButton).removeAttribute('hidden');
+
+    },
+
+    _handleFileInputChange: function(event) {
+      var selectedFile = event.target.files[0];
+
+      // hide buttons
+      Polymer.dom(this.$.uploadImageButton).setAttribute('hidden', '');
+      Polymer.dom(this.$.referenceExternalImageButton).setAttribute('hidden', '');
+      // show remove button
+      Polymer.dom(this.$.clearButton).removeAttribute('hidden');
+
+      uploadActivity.headers = {
+        "X-Client": "Now"
+      };
+      var formData = new FormData();
+      formData.append("imageToUpload", selectedFile);
+      // upload the file first
+      uploadActivity.body = formData;
+      uploadActivity.contentType = "multipart/form-data";
+      uploadActivity.generateRequest();
+    },
+    
+    _handleUploadActivityResponse: function(event) {
+      // display preview next
+
+      var fileReader = new FileReader();
+      var self = this;
+      Polymer.dom(this.$.imagePreview).innerHTML = '';
+      fileReader.onload = function(event) {
+        var newImage = document.createElement('img');
+        Polymer.dom(newImage).classList.add('preview-image');
+        Polymer.dom(newImage).classList.add('style-scope');
+        Polymer.dom(newImage).classList.add('at-form-image-upload');
+        newImage.src = event.target.result;
+        self.$.imagePreview.appendChild(newImage);
+      };
+      fileReader.readAsDataURL(selectedFile);
+    },
+
+    _handleUploadActivityError: function(event) {
+      Polymer.dom(this.$.clearButton).setAttribute('hidden', '');
+      Polymer.dom(this.$.uploadImageButton).removeAttribute('hidden');
+      Polymer.dom(this.$.referenceExternalImageButton).removeAttribute('hidden');
+    },
+
+    _handleModalElementValueChanged: function(event) {
+      var value = event.detail.value;
+      var externalUrl = value.externalImageUrl;
+      
+      // download the image from the external url
+
+      // upload the image to upload url
+
+      this.value = externalUrl;
+      this._fireValueChangedEvent(this.value);
+    },
+
+    _internalValidStateUpdate: function(required) {
+      if (!this._isReady) return;
+        
+      if (this._showErrorsWhenAttached) {
+        this._showErrorsWhenAttached = undefined;
+        this.validate(true);
+        return;
+      
+      } else if (this._clearErrorsWhenAttached) {
+        this._clearErrorsWhenAttached = undefined;
+        this.validate(false);
+        return;
+      }
+
+      this.validate();
+    },
+
+    validate: function(showError) {
+      if (!this.$ && this.autoValidate == false && showError == true) {
+        // showError should be true when _internalValidStateUpdate is called from ready after element is attached
+        this._showErrorsWhenAttached = true;
+      
+      } else if (!this.$ && this.autoValidate == true && showError == false) {
+        this._clearErrorsWhenAttached = true;
+      }
+
+      if (showError === undefined) {
+        showError = this.autoValidate;
+      }
+
+      var validationResult = this._validateBaseData();
+      this._handleValidationResult(validationResult);
+      if (!validationResult.isValid) {
+        return validationResult.isValid;
+      }
+
+      validationResult = this._validateData(this, this.value, this.T.bind(this));
+      if (showError) this._handleValidationResult(validationResult);
+
+      return validationResult.isValid;
+    },
+
+    _updateUIValidState: function(isValid) {
+      if (!this.$) return;
+      
+      this.toggleClass('error', !isValid, this.$.label);
+      this.toggleClass('error', !isValid, this.$.contentContainer);
+    },
+
+    focus: function() {
+      var selectAFileButton = this.$.uploadImageButtonText;
+      if (selectAFileButton.focus) {
+        selectAFileButton.focus();
+      }
+    },
+
+    // this function is part of the hint/validation API hint should be displayed when element gains focus behavior can not know when element gained focus but if gived focusable element it can attach to its focus event it should return focusable element
+    // if available or null if focusable element doesn't exist
+    _getFocusableElement: function() {
+      return this.$.uploadImageButton;
     }
+
   });
 </script>
