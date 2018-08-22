@@ -50,16 +50,15 @@
     </style>
 
     <input style="display: none" id="fileInput" on-change="_handleFileInputChange" type="file" />
-    <at-core-modal-element wide id="externalUrlModal" element-name="at-form-complex/at-form-complex" schema="[[_externalImageUrlSchema]]"
-      on-value-changed="_handleModalElementValueChanged"></at-core-modal-element>
+    <at-core-modal-element wide id="externalUrlModal" element-name="at-form-complex/at-form-complex" schema="[[_externalImageUrlSchema]]" on-value-changed="_handleModalElementValueChanged"></at-core-modal-element>
     <at-core-activity id="uploadActivity" url="[[uploadUrl]]" method="POST" on-response="_handleUploadActivityResponse" on-error="_handleUploadActivityError"></at-core-activity>
     <at-core-activity id="externalImageDownloadActivity" method="GET" handle-as="blob" on-response="_handleExternalImageDownloadResponse" on-error="_handleExternalImageDownloadError"></at-core-activity>
-    
+
     <div id="atContainer" class="at-container">
       <iron-label id="label" for="uploadImageButton" disabled$="[[disabled]]" hidden$="[[hideLabel]]">{{_getLocalized(label)}}</iron-label>
       <div id="contentContainer" class="layout-vertical">
         <div id="imagePreview" class="image-preview"></div>
-        
+
         <div id="imagePlaceholder" class="m" hidden>
           <div class="placeholder-text"></div>
           <div class="placeholder-text mtsm"></div>
@@ -71,11 +70,9 @@
             <iron-label id="uploadImageButtonText" class="at-button-label">{{_getLocalized("Upload an image")}}</iron-label>
           </at-carbon-button>
           <span class="font-body1">{{_getLocalized("or")}}</span>
-          <at-carbon-button id="referenceExternalImageButton" on-click="_handleReferenceExternalImageClick" disabled$="[[disabled]]"
-            class="at-button">
+          <at-carbon-button id="referenceExternalImageButton" on-click="_handleReferenceExternalImageClick" disabled$="[[disabled]]" class="at-button">
             <at-carbon-icon icon="[[icon]]" class="at-button-icon"></at-carbon-icon>
-            <iron-label id="referenceExternalImageButtonText" class="at-button-label">{{_getLocalized("Reference external
-              image")}}</iron-label>
+            <iron-label id="referenceExternalImageButtonText" class="at-button-label">{{_getLocalized("Reference externalimage")}}</iron-label>
           </at-carbon-button>
 
           <at-carbon-button id="clearButton" on-click="_handleClearButtonClick" disabled$="[[disabled]]" class="at-button" hidden>
@@ -246,12 +243,12 @@
     _handleClearButtonClick: function(event) {
       Polymer.dom(this.$.imagePreview).innerHTML = '';
       this.value = "";
+      this._fireValueChangedEvent(this.value);
 
       Polymer.dom(this.$.clearButton).setAttribute('hidden', '');
 
       Polymer.dom(this.$.uploadImageButton).removeAttribute('hidden');
       Polymer.dom(this.$.referenceExternalImageButton).removeAttribute('hidden');
-
     },
 
     _handleFileInputChange: function(event) {
@@ -291,7 +288,7 @@
       Polymer.dom(newImage).classList.add('at-form-image-upload');
       newImage.src = result.mediaUrl;
       self.$.imagePreview.appendChild(newImage);
-      
+
       Polymer.dom(this.$.imagePreview).removeAttribute('hidden');
       Polymer.dom(this.$.imagePlaceholder).setAttribute('hidden', '');
 
@@ -312,8 +309,9 @@
       var value = event.detail.value;
       var externalUrl = value.externalImageUrl;
 
-      externalUrl = '/Media/Default/attachments/at-core-dashboard-echo-performance-issue.png';
-      
+      // TODO validate externalUrl; but what are them rules
+      if (externalUrl == "") return;
+
       // download the image from the external url
       this.$.externalImageDownloadActivity.url = externalUrl;
       this.$.externalImageDownloadActivity.generateRequest();
@@ -328,10 +326,17 @@
     _handleExternalImageDownloadResponse: function(event) {
       // upload the image to upload url
       var blob = event.detail;
-      
+
+      // do not upload empty blob
+      if (blob.size == 0) {
+        Polymer.dom(this.$.imagePreview).removeAttribute('hidden');
+        Polymer.dom(this.$.imagePlaceholder).setAttribute('hidden', '');
+        return;
+      }
+
       var externalUrl = event.target.url;
       var extUrlParts = externalUrl.split("/");
-      
+
       var fileName = extUrlParts[extUrlParts.length - 1];
       var file = new File([blob], fileName);
 
@@ -351,8 +356,6 @@
     },
 
     _handleExternalImageDownloadError: function(event) {
-      
-
       Polymer.dom(this.$.imagePreview).removeAttribute('hidden');
       Polymer.dom(this.$.imagePlaceholder).setAttribute('hidden', '');
     },

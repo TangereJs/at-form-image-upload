@@ -1,6 +1,6 @@
 {
   "name": "at-form-image-upload",
-  "version": "0.0.1.39",
+  "version": "0.0.1.45",
   "private": true,
   "dependencies": {
     "polymer": "Polymer/polymer#master"
