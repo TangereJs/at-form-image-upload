@@ -49,10 +49,12 @@
       }
     </style>
 
-    <input style="display: none" id="fileInput" on-change="_handleFileInputChange" type="file"/>
-    <at-core-modal-element wide id="externalUrlModal" element-name="at-form-complex/at-form-complex" schema="[[_externalImageUrlSchema]]" on-value-changed="_handleModalElementValueChanged"></at-core-modal-element>
+    <input style="display: none" id="fileInput" on-change="_handleFileInputChange" type="file" />
+    <at-core-modal-element wide id="externalUrlModal" element-name="at-form-complex/at-form-complex" schema="[[_externalImageUrlSchema]]"
+      on-value-changed="_handleModalElementValueChanged"></at-core-modal-element>
     <at-core-activity id="uploadActivity" url="[[uploadUrl]]" method="POST" on-response="_handleUploadActivityResponse" on-error="_handleUploadActivityError"></at-core-activity>
-
+    <at-core-activity id="externalImageDownloadActivity" method="GET" handle-as="blob" on-response="_handleExternalImageDownloadResponse" on-error="_handleExternalImageDownloadError"></at-core-activity>
+    
     <div id="atContainer" class="at-container">
       <iron-label id="label" for="uploadImageButton" disabled$="[[disabled]]" hidden$="[[hideLabel]]">{{_getLocalized(label)}}</iron-label>
       <div id="contentContainer" class="layout-vertical">
@@ -64,9 +66,11 @@
             <iron-label id="uploadImageButtonText" class="at-button-label">{{_getLocalized("Upload an image")}}</iron-label>
           </at-carbon-button>
           <span class="font-body1">{{_getLocalized("or")}}</span>
-          <at-carbon-button id="referenceExternalImageButton" on-click="_handleReferenceExternalImageClick" disabled$="[[disabled]]" class="at-button">
+          <at-carbon-button id="referenceExternalImageButton" on-click="_handleReferenceExternalImageClick" disabled$="[[disabled]]"
+            class="at-button">
             <at-carbon-icon icon="[[icon]]" class="at-button-icon"></at-carbon-icon>
-            <iron-label id="referenceExternalImageButtonText" class="at-button-label">{{_getLocalized("Reference external image")}}</iron-label>
+            <iron-label id="referenceExternalImageButtonText" class="at-button-label">{{_getLocalized("Reference external
+              image")}}</iron-label>
           </at-carbon-button>
 
           <at-carbon-button id="clearButton" on-click="_handleClearButtonClick" disabled$="[[disabled]]" class="at-button" hidden>
@@ -237,7 +241,7 @@
     _handleClearButtonClick: function(event) {
       Polymer.dom(this.$.imagePreview).innerHTML = '';
       this.value = "";
-      
+
       Polymer.dom(this.$.clearButton).setAttribute('hidden', '');
 
       Polymer.dom(this.$.uploadImageButton).removeAttribute('hidden');
@@ -248,38 +252,43 @@
     _handleFileInputChange: function(event) {
       var selectedFile = event.target.files[0];
 
-      // hide buttons
-      Polymer.dom(this.$.uploadImageButton).setAttribute('hidden', '');
-      Polymer.dom(this.$.referenceExternalImageButton).setAttribute('hidden', '');
-      // show remove button
-      Polymer.dom(this.$.clearButton).removeAttribute('hidden');
-
       uploadActivity.headers = {
         "X-Client": "Now"
       };
       var formData = new FormData();
       formData.append("imageToUpload", selectedFile);
+
+      // TODO
+      // component should not care about folderPath and type
+      // these should be external
+      formData.append("folderPath", "attachments");
+      formData.append("type", "image");
+
       // upload the file first
       uploadActivity.body = formData;
       uploadActivity.contentType = "multipart/form-data";
       uploadActivity.generateRequest();
     },
-    
+
     _handleUploadActivityResponse: function(event) {
       // display preview next
+      var result = event.detail[0];
 
-      var fileReader = new FileReader();
       var self = this;
       Polymer.dom(this.$.imagePreview).innerHTML = '';
-      fileReader.onload = function(event) {
-        var newImage = document.createElement('img');
-        Polymer.dom(newImage).classList.add('preview-image');
-        Polymer.dom(newImage).classList.add('style-scope');
-        Polymer.dom(newImage).classList.add('at-form-image-upload');
-        newImage.src = event.target.result;
-        self.$.imagePreview.appendChild(newImage);
-      };
-      fileReader.readAsDataURL(selectedFile);
+
+      var newImage = document.createElement('img');
+      Polymer.dom(newImage).classList.add('preview-image');
+      Polymer.dom(newImage).classList.add('style-scope');
+      Polymer.dom(newImage).classList.add('at-form-image-upload');
+      newImage.src = result.mediaUrl;
+      self.$.imagePreview.appendChild(newImage);
+
+      // hide buttons
+      Polymer.dom(this.$.uploadImageButton).setAttribute('hidden', '');
+      Polymer.dom(this.$.referenceExternalImageButton).setAttribute('hidden', '');
+      // show remove button
+      Polymer.dom(this.$.clearButton).removeAttribute('hidden');
     },
 
     _handleUploadActivityError: function(event) {
@@ -291,23 +300,54 @@
     _handleModalElementValueChanged: function(event) {
       var value = event.detail.value;
       var externalUrl = value.externalImageUrl;
+
+      externalUrl = '/Media/Default/attachments/at-core-dashboard-echo-performance-issue.png';
       
       // download the image from the external url
-
-      // upload the image to upload url
+      this.$.externalImageDownloadActivity.url = externalUrl;
+      this.$.externalImageDownloadActivity.generateRequest();
 
       this.value = externalUrl;
       this._fireValueChangedEvent(this.value);
     },
 
+    _handleExternalImageDownloadResponse: function(event) {
+      // upload the image to upload url
+      var blob = event.detail;
+      
+      var externalUrl = event.target.url;
+      var extUrlParts = externalUrl.split("/");
+      
+      var fileName = extUrlParts[extUrlParts.length - 1];
+      var file = new File([blob], fileName);
+
+      var formData = new FormData();
+      formData.append("imageToUpload", file);
+
+      // TODO
+      // component should not care about folderPath and type
+      // these should be external
+      formData.append("folderPath", "attachments");
+      formData.append("type", "image");
+
+      // upload the file first
+      uploadActivity.body = formData;
+      uploadActivity.contentType = "multipart/form-data";
+      uploadActivity.generateRequest();
+    },
+
+    _handleExternalImageDownloadError: function(event) {
+      debugger;
+    },
+
     _internalValidStateUpdate: function(required) {
       if (!this._isReady) return;
-        
+
       if (this._showErrorsWhenAttached) {
         this._showErrorsWhenAttached = undefined;
         this.validate(true);
         return;
-      
+
       } else if (this._clearErrorsWhenAttached) {
         this._clearErrorsWhenAttached = undefined;
         this.validate(false);
@@ -321,7 +361,7 @@
       if (!this.$ && this.autoValidate == false && showError == true) {
         // showError should be true when _internalValidStateUpdate is called from ready after element is attached
         this._showErrorsWhenAttached = true;
-      
+
       } else if (!this.$ && this.autoValidate == true && showError == false) {
         this._clearErrorsWhenAttached = true;
       }
@@ -344,7 +384,7 @@
 
     _updateUIValidState: function(isValid) {
       if (!this.$) return;
-      
+
       this.toggleClass('error', !isValid, this.$.label);
       this.toggleClass('error', !isValid, this.$.contentContainer);
     },
