@@ -294,6 +294,8 @@
     _handleUploadActivityResponse: function(event) {
       // display preview next
       var result = event.detail[0];
+      this._setValue(result.mediaUrl);
+      this._fireValueChangedEvent(this.value);
 
       var self = this;
       Polymer.dom(this.$.imagePreview).innerHTML = '';
