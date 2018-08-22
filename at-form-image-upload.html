@@ -64,18 +64,19 @@
           <div class="placeholder-text mtsm"></div>
         </div>
 
-        <div>
+        <div id="selectButtonGroup">
           <at-carbon-button id="uploadImageButton" on-click="_uploadFileClickHandler" disabled$="[[disabled]]" class="at-button">
             <at-carbon-icon icon="now:upload" class="at-button-icon"></at-carbon-icon>
             <iron-label id="uploadImageButtonText" class="at-button-label">{{_getLocalized("Upload an image")}}</iron-label>
           </at-carbon-button>
           <span class="font-body1">{{_getLocalized("or")}}</span>
-          <at-carbon-button id="referenceExternalImageButton" on-click="_handleReferenceExternalImageClick" disabled$="[[disabled]]" class="at-button">
+          <at-carbon-button on-click="_handleReferenceExternalImageClick" disabled$="[[disabled]]" class="at-button">
             <at-carbon-icon icon="[[icon]]" class="at-button-icon"></at-carbon-icon>
             <iron-label id="referenceExternalImageButtonText" class="at-button-label">{{_getLocalized("Reference external image")}}</iron-label>
           </at-carbon-button>
-
-          <at-carbon-button id="clearButton" on-click="_handleClearButtonClick" disabled$="[[disabled]]" class="at-button" hidden>
+        </div>
+        <div id="clearButtonGroup" hidden>
+          <at-carbon-button on-click="_handleClearButtonClick" disabled$="[[disabled]]" class="at-button">
             <at-carbon-icon icon="cancel" class="at-button-icon"></at-carbon-icon>
             <iron-label class="at-button-label">{{_getLocalized("Remove")}}</iron-label>
           </at-carbon-button>
@@ -243,6 +244,9 @@
       Polymer.dom(newImage).classList.add('at-form-image-upload');
       newImage.src = newValue;
       this.$.imagePreview.appendChild(newImage);
+
+      Polymer.dom(this.$.selectButtonGroup).setAttribute('hidden', '');
+      Polymer.dom(this.$.clearButtonGroup).removeAttribute('hidden');
     },
 
     _uploadFileClickHandler: function(event) {
@@ -261,10 +265,8 @@
       this._setValue("");
       this._fireValueChangedEvent(this.value);
 
-      Polymer.dom(this.$.clearButton).setAttribute('hidden', '');
-
-      Polymer.dom(this.$.uploadImageButton).removeAttribute('hidden');
-      Polymer.dom(this.$.referenceExternalImageButton).removeAttribute('hidden');
+      Polymer.dom(this.$.clearButtonGroup).setAttribute('hidden', '');
+      Polymer.dom(this.$.selectButtonGroup).removeAttribute('hidden');
     },
 
     _handleFileInputChange: function(event) {
@@ -310,17 +312,13 @@
       Polymer.dom(this.$.imagePreview).removeAttribute('hidden');
       Polymer.dom(this.$.imagePlaceholder).setAttribute('hidden', '');
 
-      // hide buttons
-      Polymer.dom(this.$.uploadImageButton).setAttribute('hidden', '');
-      Polymer.dom(this.$.referenceExternalImageButton).setAttribute('hidden', '');
-      // show remove button
-      Polymer.dom(this.$.clearButton).removeAttribute('hidden');
+      Polymer.dom(this.$.selectButtonGroup).setAttribute('hidden', '');
+      Polymer.dom(this.$.clearButtonGroup).removeAttribute('hidden');
     },
 
     _handleUploadActivityError: function(event) {
-      Polymer.dom(this.$.clearButton).setAttribute('hidden', '');
-      Polymer.dom(this.$.uploadImageButton).removeAttribute('hidden');
-      Polymer.dom(this.$.referenceExternalImageButton).removeAttribute('hidden');
+      Polymer.dom(this.$.clearButtonGroup).setAttribute('hidden', '');
+      Polymer.dom(this.$.selectButtonGroup).removeAttribute('hidden');
     },
 
     _handleModalElementValueChanged: function(event) {
