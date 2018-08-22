@@ -179,7 +179,8 @@
       uploadUrl: {
         type: String,
         value: "",
-        xgridcols: "12"
+        xgridcols: "12",
+        observer: "_uploadUrlChanged"
       },
 
       /**
@@ -236,6 +237,10 @@
 
     ready: function() {
       this._isReady = true;
+    },
+
+    _uploadUrlChanged: function(newValue, oldValue) {
+      this.$.uploadActivity.$.msg.html = "";
     },
 
     _valueChanged: function(newValue, oldValue) {
@@ -313,6 +318,7 @@
     },
 
     _handleUploadActivityError: function(event) {
+      Polymer.dom(this.$.imagePlaceholder).setAttribute('hidden', '');
       Polymer.dom(this.$.clearButtonGroup).setAttribute('hidden', '');
       Polymer.dom(this.$.selectButtonGroup).removeAttribute('hidden');
     },
