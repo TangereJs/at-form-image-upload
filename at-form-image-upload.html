@@ -59,6 +59,11 @@
       <iron-label id="label" for="uploadImageButton" disabled$="[[disabled]]" hidden$="[[hideLabel]]">{{_getLocalized(label)}}</iron-label>
       <div id="contentContainer" class="layout-vertical">
         <div id="imagePreview" class="image-preview"></div>
+        
+        <div id="imagePlaceholder" class="m" hidden>
+          <div class="placeholder-text"></div>
+          <div class="placeholder-text mtsm"></div>
+        </div>
 
         <div>
           <at-carbon-button id="uploadImageButton" on-click="_uploadFileClickHandler" disabled$="[[disabled]]" class="at-button">
@@ -268,6 +273,9 @@
       uploadActivity.body = formData;
       uploadActivity.contentType = "multipart/form-data";
       uploadActivity.generateRequest();
+
+      Polymer.dom(this.$.imagePreview).setAttribute('hidden', '');
+      Polymer.dom(this.$.imagePlaceholder).removeAttribute('hidden');
     },
 
     _handleUploadActivityResponse: function(event) {
@@ -283,6 +291,9 @@
       Polymer.dom(newImage).classList.add('at-form-image-upload');
       newImage.src = result.mediaUrl;
       self.$.imagePreview.appendChild(newImage);
+      
+      Polymer.dom(this.$.imagePreview).removeAttribute('hidden');
+      Polymer.dom(this.$.imagePlaceholder).setAttribute('hidden', '');
 
       // hide buttons
       Polymer.dom(this.$.uploadImageButton).setAttribute('hidden', '');
@@ -306,6 +317,9 @@
       // download the image from the external url
       this.$.externalImageDownloadActivity.url = externalUrl;
       this.$.externalImageDownloadActivity.generateRequest();
+
+      Polymer.dom(this.$.imagePreview).setAttribute('hidden', '');
+      Polymer.dom(this.$.imagePlaceholder).removeAttribute('hidden');
 
       this.value = externalUrl;
       this._fireValueChangedEvent(this.value);
@@ -337,7 +351,10 @@
     },
 
     _handleExternalImageDownloadError: function(event) {
-      debugger;
+      
+
+      Polymer.dom(this.$.imagePreview).removeAttribute('hidden');
+      Polymer.dom(this.$.imagePlaceholder).setAttribute('hidden', '');
     },
 
     _internalValidStateUpdate: function(required) {
