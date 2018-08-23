@@ -55,17 +55,20 @@
         padding: 0 8px;
       }
 
-      .dragdrop-area {
+      .dropzone-input {
+        outline: none;
+
         max-width: 576px;
         width: 576px;
         margin: 0 auto;
         height: 144px;
-
+        text-align: center;
+        
         padding: 8px;
         border: 1px dashed var(--at-primary);
       }
 
-      .drag-over-class {
+      .dropzone-input.drag-over-class {
         border: 1px dashed var(--at-secondary);
       }
     </style>
@@ -78,15 +81,17 @@
       <iron-label id="label" for="uploadImageButton" disabled$="[[disabled]]" hidden$="[[hideLabel]]">{{_getLocalized(label)}}</iron-label>
       <div id="contentContainer" class="layout-vertical">
         <div id="imagePreview" class="image-preview"></div>
-
-        <div id="dragDropArea" class="dragdrop-area layout-vertical layout-center-center" 
+        <input id="dropzone"
+          placeholder="Drag images here or paste from clipboard" 
+          class="font-body1 dropzone-input"
+          on-keydown="_handleDropzoneKeydown" 
+          on-keyup="_handleDropzoneKeyup" 
+          on-paste="_handleImagePaste" 
           on-drop="_handleImageDrop" 
           on-dragenter="_handleDragEnter" 
           on-dragLeave="_handleDragLeave" 
           on-dragover="_handleDragOver"
-        >
-          <div class="font-body1">Drop images here</div>
-        </div>
+        />
 
         <div id="imagePlaceholder" class="m" hidden>
           <div class="placeholder-text"></div>
@@ -281,12 +286,12 @@
   
         Polymer.dom(this.$.selectButtonGroup).setAttribute('hidden', '');
         Polymer.dom(this.$.clearButtonGroup).removeAttribute('hidden');
-        Polymer.dom(this.$.dragDropArea).setAttribute('hidden', '');
+        Polymer.dom(this.$.dropzone).setAttribute('hidden', '');
 
       } else {
         Polymer.dom(this.$.clearButtonGroup).setAttribute('hidden', '');
         Polymer.dom(this.$.selectButtonGroup).removeAttribute('hidden');
-        Polymer.dom(this.$.dragDropArea).removeAttribute('hidden');
+        Polymer.dom(this.$.dropzone).removeAttribute('hidden');
       }
 
       if (this._isReady) {
@@ -339,7 +344,6 @@
     _handleUploadActivityResponse: function(event) {
       Polymer.dom(this.$.imagePreview).removeAttribute('hidden');
       Polymer.dom(this.$.imagePlaceholder).setAttribute('hidden', '');
-      Polymer.dom(this.$.dragDropArea).setAttribute('hidden', '');
 
       // display preview next
       var result = event.detail[0];
@@ -422,8 +426,7 @@
     },
     
     _handleImageDrop: function(event) {
-      Polymer.dom(this.$.dragDropArea).classList.remove('drag-over-class');
-      console.log('handle drop');
+      Polymer.dom(this.$.dropzone).classList.remove('drag-over-class');
 
       event.stopPropagation();
       event.preventDefault();
@@ -435,25 +438,47 @@
     },
     
     _handleDragEnter: function(event) {
-      Polymer.dom(this.$.dragDropArea).classList.add('drag-over-class');
-      console.log('handle drag enter');
+      Polymer.dom(this.$.dropzone).classList.add('drag-over-class');
 
       event.stopPropagation();
       event.preventDefault();
     },
     
     _handleDragLeave: function(event) {
-      Polymer.dom(this.$.dragDropArea).classList.remove('drag-over-class');
-      console.log('handle drag enter');
-      
+      Polymer.dom(this.$.dropzone).classList.remove('drag-over-class');
+
       event.stopPropagation();
       event.preventDefault();
     },
     
     _handleDragOver: function(event) {
-      console.log('handle drag over');
-
       event.stopPropagation();
+      event.preventDefault();
+    },
+
+    _handleImagePaste: function(event) {
+      event.stopPropagation();
+      event.preventDefault();
+      
+      if (event.clipboardData.files.length !== 1) return;
+      
+      var file = event.clipboardData.files[0];
+      this._uploadFile(file);
+    },
+
+    _handleDropzoneKeydown: function(event) {
+      var keyCode = event.keyCode;
+      
+      // ignore all key combinations except for CTRL+V
+      if (keyCode !== 86 || !event.ctrlKey) {
+        event.preventDefault();
+        return false;
+      }
+      
+      return true;
+    },
+
+    _handleDropzoneKeyup: function(event) {
       event.preventDefault();
     },
 
