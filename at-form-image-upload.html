@@ -54,6 +54,20 @@
         line-height: 38px;
         padding: 0 8px;
       }
+
+      .dragdrop-area {
+        max-width: 576px;
+        width: 576px;
+        margin: 0 auto;
+        height: 144px;
+
+        padding: 8px;
+        border: 1px dashed var(--at-primary);
+      }
+
+      .drag-over-class {
+        border: 1px dashed var(--at-secondary);
+      }
     </style>
 
     <input style="display: none" id="fileInput" on-change="_handleFileInputChange" type="file" />
@@ -64,6 +78,15 @@
       <iron-label id="label" for="uploadImageButton" disabled$="[[disabled]]" hidden$="[[hideLabel]]">{{_getLocalized(label)}}</iron-label>
       <div id="contentContainer" class="layout-vertical">
         <div id="imagePreview" class="image-preview"></div>
+
+        <div id="dragDropArea" class="dragdrop-area layout-vertical layout-center-center" 
+          on-drop="_handleImageDrop" 
+          on-dragenter="_handleDragEnter" 
+          on-dragLeave="_handleDragLeave" 
+          on-dragover="_handleDragOver"
+        >
+          <div class="font-body1">Drop images here</div>
+        </div>
 
         <div id="imagePlaceholder" class="m" hidden>
           <div class="placeholder-text"></div>
@@ -258,10 +281,12 @@
   
         Polymer.dom(this.$.selectButtonGroup).setAttribute('hidden', '');
         Polymer.dom(this.$.clearButtonGroup).removeAttribute('hidden');
+        Polymer.dom(this.$.dragDropArea).setAttribute('hidden', '');
 
       } else {
         Polymer.dom(this.$.clearButtonGroup).setAttribute('hidden', '');
         Polymer.dom(this.$.selectButtonGroup).removeAttribute('hidden');
+        Polymer.dom(this.$.dragDropArea).removeAttribute('hidden');
       }
 
       if (this._isReady) {
@@ -286,24 +311,27 @@
 
     _handleFileInputChange: function(event) {
       var selectedFile = event.target.files[0];
-
-      uploadActivity.headers = {
+      this._uploadFile(selectedFile);
+    },
+    
+    _uploadFile: function(file) {
+      this.$.uploadActivity.headers = {
         "X-Client": "Now"
       };
       var formData = new FormData();
-      formData.append("imageToUpload", selectedFile);
-
+      formData.append("imageToUpload", file);
+  
       // TODO
       // component should not care about folderPath and type
       // these should be external
       formData.append("folderPath", "attachments");
       formData.append("type", "image");
-
+  
       // upload the file first
-      uploadActivity.body = formData;
-      uploadActivity.contentType = "multipart/form-data";
-      uploadActivity.generateRequest();
-
+      this.$.uploadActivity.body = formData;
+      this.$.uploadActivity.contentType = "multipart/form-data";
+      this.$.uploadActivity.generateRequest();
+  
       Polymer.dom(this.$.imagePreview).setAttribute('hidden', '');
       Polymer.dom(this.$.imagePlaceholder).removeAttribute('hidden');
     },
@@ -311,6 +339,7 @@
     _handleUploadActivityResponse: function(event) {
       Polymer.dom(this.$.imagePreview).removeAttribute('hidden');
       Polymer.dom(this.$.imagePlaceholder).setAttribute('hidden', '');
+      Polymer.dom(this.$.dragDropArea).setAttribute('hidden', '');
 
       // display preview next
       var result = event.detail[0];
@@ -391,8 +420,43 @@
     _getFocusableElement: function() {
       return this.$.uploadImageButton;
     },
+    
+    _handleImageDrop: function(event) {
+      Polymer.dom(this.$.dragDropArea).classList.remove('drag-over-class');
+      console.log('handle drop');
 
-    _emptyFunction: function() {},
+      event.stopPropagation();
+      event.preventDefault();
+
+      if (event.dataTransfer.files.length !== 1) return;
+
+      var file = event.dataTransfer.files[0];
+      this._uploadFile(file);
+    },
+    
+    _handleDragEnter: function(event) {
+      Polymer.dom(this.$.dragDropArea).classList.add('drag-over-class');
+      console.log('handle drag enter');
+
+      event.stopPropagation();
+      event.preventDefault();
+    },
+    
+    _handleDragLeave: function(event) {
+      Polymer.dom(this.$.dragDropArea).classList.remove('drag-over-class');
+      console.log('handle drag enter');
+      
+      event.stopPropagation();
+      event.preventDefault();
+    },
+    
+    _handleDragOver: function(event) {
+      console.log('handle drag over');
+
+      event.stopPropagation();
+      event.preventDefault();
+    },
+
     _isString: function(obj) { return Object.prototype.toString.call(obj) === "[object String]"; }
 
   });
