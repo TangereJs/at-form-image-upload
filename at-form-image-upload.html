@@ -4,6 +4,7 @@
 <link rel="import" href="at-form-image-upload-input-validation.html">
 <link rel="import" href="../at-core-style-classes/at-core-style-classes.html">
 <link rel="import" href="../iron-label/iron-label.html">
+<link rel="import" href="../at-core-spinner/at-core-spinner.html">
 
 <link rel="import" href="../at-carbon-button/at-carbon-button.html">
 <link rel="import" href="../at-carbon-icon/at-carbon-icon.html">
@@ -74,6 +75,10 @@
         border: 1px dashed var(--at-secondary);
       }
 
+      .image-placeholder {
+        text-align: center;
+      }
+
       @media (max-width: 320px) {
         .image-preview {
           max-width: 320px;
@@ -106,9 +111,9 @@
           on-dragover="_handleDragOver"
         />
 
-        <div id="imagePlaceholder" class="m" hidden>
-          <div class="placeholder-text"></div>
-          <div class="placeholder-text mtsm"></div>
+        <div id="imagePlaceholder" class="m image-placeholder" hidden>
+          <at-core-spinner></at-core-spinner>
+          <div class="font-body1">{{_getLocalized("Uploading ...")}}</div>
         </div>
 
         <div id="selectButtonGroup" class="layout-horizontal layout-center-justified mtsm">
