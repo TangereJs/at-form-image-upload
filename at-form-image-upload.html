@@ -351,6 +351,7 @@
       this.$.uploadActivity.contentType = "multipart/form-data";
       this.$.uploadActivity.generateRequest();
   
+      Polymer.dom(this.$.dropzone).setAttribute('hidden', '');
       Polymer.dom(this.$.imagePreview).setAttribute('hidden', '');
       Polymer.dom(this.$.imagePlaceholder).removeAttribute('hidden');
     },
