@@ -56,6 +56,7 @@
       }
 
       .dropzone-input {
+        box-sizing: border-box;
         outline: none;
 
         max-width: 576px;
@@ -70,6 +71,17 @@
 
       .dropzone-input.drag-over-class {
         border: 1px dashed var(--at-secondary);
+      }
+
+      @media (max-width: 320px) {
+        .image-preview {
+          max-width: 320px;
+        }
+
+        .dropzone-input { 
+          max-width: 320px;
+          width: 100%;
+        }
       }
     </style>
 
@@ -101,12 +113,12 @@
         <div id="selectButtonGroup" class="layout-horizontal layout-center-justified mtsm">
           <at-carbon-button id="uploadImageButton" on-click="_uploadFileClickHandler" disabled$="[[disabled]]" class="at-button">
             <at-carbon-icon icon="now:upload" class="at-button-icon"></at-carbon-icon>
-            <iron-label id="uploadImageButtonText" class="at-button-label">{{_getLocalized("Upload an image")}}</iron-label>
+            <iron-label id="uploadImageButtonText" class="at-button-label">{{_getLocalized("Upload")}}</iron-label>
           </at-carbon-button>
           <span class="font-body1 or-text">{{_getLocalized("or")}}</span>
           <at-carbon-button on-click="_handleReferenceExternalImageClick" disabled$="[[disabled]]" class="at-button">
             <at-carbon-icon icon="[[icon]]" class="at-button-icon"></at-carbon-icon>
-            <iron-label id="referenceExternalImageButtonText" class="at-button-label">{{_getLocalized("Reference external image")}}</iron-label>
+            <iron-label id="referenceExternalImageButtonText" class="at-button-label">{{_getLocalized("Select")}}</iron-label>
           </at-carbon-button>
         </div>
         <div id="clearButtonGroup" class="layout-horizontal layout-center-justified mtsm" hidden>
