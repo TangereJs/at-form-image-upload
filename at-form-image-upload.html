@@ -316,6 +316,8 @@
       if (this._isReady) {
         this._fireValueChangedEvent(newValue);
       }
+
+      if (this.autoValidate) this.validate(true);
     },
 
     _uploadFileClickHandler: function(event) {

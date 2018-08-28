@@ -16,8 +16,8 @@
         return Object.prototype.toString.call(obj) === "[object Boolean]";
       }
 
-      function isNumber(obj) {
-        return Object.prototype.toString.call(obj) === "[object Number]";
+      function isString(obj) {
+        return Object.prototype.toString.call(obj) === "[object String]";
       }
 
       function isHTMLElement(obj) {
@@ -26,10 +26,6 @@
 
       function isHTMLUnknownElement(obj) {
         return Object.prototype.toString.call(obj) === "[object HTMLUnknownElement]";
-      }
-
-      function isArray(obj) {
-        return Object.prototype.toString.call(obj) === "[object Array]";
       }
 
       function format(format) {
@@ -64,9 +60,9 @@
       // validate input parameters
       // schema must be object
       // @isHTMLUnknownElement(schema) thank you IE11 and Safari for not supporting custom elements. Thank you very much ...
-      validationResult.isValid = isObject(schema) || ((isHTMLUnknownElement(schema) || isHTMLElement(schema)) && schema.is === "at-form-image");
+      validationResult.isValid = isObject(schema) || ((isHTMLUnknownElement(schema) || isHTMLElement(schema)) && schema.is === "at-form-image-upload");
       if (!validationResult.isValid) {
-        validationResult.errorMessage = localizer("schema is not an object or at-form-image.")
+        validationResult.errorMessage = localizer("schema is not an object or at-form-image-upload.")
         return validationResult;
       }
 
@@ -100,7 +96,7 @@
 
       /*
         2. check data type
-        value assigned must match type specified in at-form-image.properties.value.type
+        value assigned must match type specified in at-form-image-upload.properties.value.type
       */
       validationResult = _validateValueType(schema.properties.value, value, localizer);
       if (!validationResult.isValid) {
@@ -129,7 +125,7 @@
         };
 
         // calculate type strings for valueObj and object that is returned from valueSchema.type function
-        // valueSchema.type function comes from at-form-image.properties.value.type
+        // valueSchema.type function comes from at-form-image-upload.properties.value.type
         var schemaTypeString = getTypeString(valueSchema.type());
         var nullTypeString = getTypeString(null);
         var valueObjTypeString = getTypeString(valueObj);
@@ -146,7 +142,7 @@
         @function _validateRequired
         @return by default return value !== ""; this works for at-form-[ codemirror, date, daterange, lookup, markdown, number, password, radio, state, text and textarea ]
         override in at-form-checkbox to always return true
-        override in at-form-image and at-from-image as is already implemented (see at-form-image Line 356 and at-form-image Line 450)
+        override in at-form-image-upload and at-from-image as is already implemented (see at-form-image-upload Line 356 and at-form-image-upload Line 450)
       */
       function _validateRequired(required, value, localizer) {
         var validationResult = {
@@ -155,11 +151,7 @@
         };
         var required_ = Boolean(required);
 
-        if (isObject(value)) {
-          validationResult.isValid = !required_ || (isArray(value.valid) && value.valid.length > 0 || (isArray(value.current) && value.current.length > 0));
-        } else {
-          validationResult.isValid = !required_ || (value !== null);
-        }
+        validationResult.isValid = !required_ || ([undefined, null, ""].indexOf(value) === -1);
 
         if (!validationResult.isValid) {
           validationResult.errorMessage = localizer("This field is required.");
